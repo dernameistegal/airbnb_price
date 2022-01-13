@@ -5,10 +5,10 @@ import numpy as np
 
 def calculate_channelwise_moments(data_dir):
     data_paths = os.listdir(data_dir)
-    data = np.empty(len(data_paths), 224, 224, 3)
+    data = np.empty((len(data_paths), 224, 224, 3))
 
     for i in range(len(data_paths)):
-        data[i, ...] = np.load(data_dir + data_paths[i])
+        data[i, ...] = np.load(data_dir + "/" + data_paths[i])
 
     # calculate channel-wise means
     data = data / 255
