@@ -3,11 +3,31 @@ import os
 import numpy as np
 
 
+def calculate_channelwise_moments(data_dir):
+    data_paths = os.listdir(data_dir)
+    data = np.empty(len(data_paths), 224, 224, 3)
+
+    for i in range(len(data_paths)):
+        data[i, ...] = np.load(data_dir + data_paths[i])
+
+    # calculate channel-wise means
+    data = data / 255
+    means = np.mean(data, dim=(0, 1, 2))
+
+    # calculate picture wise standard deviations and mean them over all pictures
+    stds = np.std(data, axis=(1, 2))
+    stds = np.mean(stds, dim=0)
+
+    return means, stds
+
+
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, filepath, ndata):
+    def __init__(self, filepath, channelmeans, channelstds, ndata):
         self.filepath = filepath
         self.ndata = ndata
         self.filenames = os.listdir(self.filepath)[0:ndata]
+        self.channelmeans = channelmeans
+        self.channelstds = channelstds
 
     def __len__(self):
         return len(self.filenames)
@@ -15,7 +35,11 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, key):
         x = np.load(self.filepath + "/" + self.filenames[key])
         x = np.transpose(x, axes=[2, 0, 1])
+        x /= 255
+        x -= self.channelmeans
+        x /= self.channelstds
         x = torch.from_numpy(x)
+
         return x
 
 
