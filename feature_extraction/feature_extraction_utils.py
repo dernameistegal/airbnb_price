@@ -1,6 +1,7 @@
 import torch
 import os
 import numpy as np
+from tqdm import tqdm
 
 
 def calculate_channelwise_moments(data_dir):
@@ -9,9 +10,10 @@ def calculate_channelwise_moments(data_dir):
     means = np.empty((len(data_paths), 3))
     stds = np.empty((len(data_paths), 3))
 
-    for i in range(len(data_paths)):
+    for i in tqdm(range(len(data_paths))):
         temp = np.load(data_dir + "/" + data_paths[i])
-        temp = temp / 255
+        temp = temp.astype(float)
+        temp /= 255
 
         means[i] = np.mean(temp, axis=(0,1))
         stds[i] = np.std(temp, axis=(0,1))
@@ -23,22 +25,23 @@ def calculate_channelwise_moments(data_dir):
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, filepath, channelmeans, channelstds, ndata):
+    def __init__(self, filepath, channel_moments, ndata):
         self.filepath = filepath
         self.ndata = ndata
         self.filenames = os.listdir(self.filepath)[0:ndata]
-        self.channelmeans = channelmeans
-        self.channelstds = channelstds
+        self.channelmeans = channel_moments[:, 0]
+        self.channelstds = channel_moments[:, 1]
 
     def __len__(self):
         return len(self.filenames)
 
     def __getitem__(self, key):
         x = np.load(self.filepath + "/" + self.filenames[key])
-        x = np.transpose(x, axes=[2, 0, 1])
+        x = x.astype(float)
         x /= 255
         x -= self.channelmeans
         x /= self.channelstds
+        x = np.transpose(x, axes=[2, 0, 1])
         x = torch.from_numpy(x)
 
         return x
