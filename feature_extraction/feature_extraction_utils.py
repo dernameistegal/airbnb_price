@@ -11,14 +11,14 @@ def calculate_channelwise_moments(data_dir):
 
     for i in range(len(data_paths)):
         temp = np.load(data_dir + "/" + data_paths[i])
-        temp /= 255
+        temp = temp / 255
 
-        means[i] = np.mean(temp, dim=(0,1))
+        means[i] = np.mean(temp, axis=(0,1))
         stds[i] = np.std(temp, axis=(0,1))
 
-    means = np.mean(means, dim=0)
-    std = np.mean(stds, dim=0)
-    
+    means = np.mean(means, axis=0)
+    std = np.mean(stds, axis=0)
+
     return means, std
 
 
