@@ -5,20 +5,21 @@ import numpy as np
 
 def calculate_channelwise_moments(data_dir):
     data_paths = os.listdir(data_dir)
-    data = np.empty((len(data_paths), 224, 224, 3))
+
+    means = np.empty((len(data_paths), 3))
+    stds = np.empty((len(data_paths), 3))
 
     for i in range(len(data_paths)):
-        data[i, ...] = np.load(data_dir + "/" + data_paths[i])
+        temp = np.load(data_dir + "/" + data_paths[i])
+        temp /= 255
 
-    # calculate channel-wise means
-    data = data / 255
-    means = np.mean(data, dim=(0, 1, 2))
+        means[i] = np.mean(temp, dim=(0,1))
+        stds[i] = np.std(temp, axis=(0,1))
 
-    # calculate picture wise standard deviations and mean them over all pictures
-    stds = np.std(data, axis=(1, 2))
-    stds = np.mean(stds, dim=0)
-
-    return means, stds
+    means = np.mean(means, dim=0)
+    std = np.mean(stds, dim=0)
+    
+    return means, std
 
 
 class Dataset(torch.utils.data.Dataset):
