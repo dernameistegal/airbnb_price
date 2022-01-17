@@ -52,6 +52,7 @@ class Dataset(torch.utils.data.Dataset):
 
         y = np.load(self.response_path + "/" + self.picture_names[key])
         y = torch.from_numpy(y).type(torch.FloatTensor)
+        y = torch.log(y+0.1)
 
         return x, y
 
