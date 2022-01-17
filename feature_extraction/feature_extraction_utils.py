@@ -37,17 +37,16 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, key):
         x = np.load(self.filepath + "/" + self.filenames[key])
-        x = x.astype(float)
+        x = torch.from_numpy(x).type(torch.FloatTensor)
         x /= 255
         x -= self.channelmeans
         x /= self.channelstds
-        x = np.transpose(x, axes=[2, 0, 1])
-        x = torch.from_numpy(x)
+        x = torch.permute(x, dims=[2, 0, 1])
 
         return x
 
 
-def compute_train_features(device, dataloader, feature_extractor, output_dim=[512, 16, 16]):
+def compute_train_features(device, dataloader, feature_extractor, output_dim=[512, 14, 14]):
     feature_extractor.to(device)
     feature_extractor.eval()
 
@@ -55,7 +54,7 @@ def compute_train_features(device, dataloader, feature_extractor, output_dim=[51
     output = torch.empty(ndata, output_dim[0], output_dim[1], output_dim[2])
     start, stop = 0, 0
 
-    with torch.no_grad:
+    with torch.no_grad():
         for batch in dataloader:
             stop += len(batch)
             output[start:stop, ...] = feature_extractor(batch.to(device))
