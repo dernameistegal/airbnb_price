@@ -25,10 +25,14 @@ def calculate_channelwise_moments(data_dir):
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, filepath, channel_moments, ndata):
-        self.filepath = filepath
+    def __init__(self, picture_path, response_path, channel_moments, ndata):
         self.ndata = ndata
-        self.filenames = os.listdir(self.filepath)[0:ndata]
+
+        self.picture_path = picture_path
+        self.response_path = response_path
+        self.picture_names = os.listdir(self.picture_path)[0:ndata]
+        self.response_names = os.listdir(self.response_path)[0:ndata]
+
         self.channelmeans = channel_moments[:, 0]
         self.channelstds = channel_moments[:, 1]
 
@@ -36,14 +40,19 @@ class Dataset(torch.utils.data.Dataset):
         return len(self.filenames)
 
     def __getitem__(self, key):
-        x = np.load(self.filepath + "/" + self.filenames[key])
+        x = np.load(self.picture_path + "/" + self.picture_names[key])
+
+        # transform (to tensor and normalize)
         x = torch.from_numpy(x).type(torch.FloatTensor)
         x /= 255
         x -= self.channelmeans
         x /= self.channelstds
         x = torch.permute(x, dims=[2, 0, 1])
 
-        return x
+        y = np.load(self.response_path + "/" + self.picture_names[key])
+        y = torch.from_numpy(x).type(torch.FloatTensor)
+
+        return x, y
 
 
 def compute_train_features(device, dataloader, feature_extractor):
@@ -58,7 +67,7 @@ def compute_train_features(device, dataloader, feature_extractor):
             output.append(feature_extractor(batch.to(device)))
 
     output = torch.cat(output, dim=0)
-    
+
     return output
 
 
