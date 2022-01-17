@@ -25,11 +25,11 @@ def calculate_channelwise_moments(data_dir):
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, picture_path, response_path, channel_moments, ndata):
+    def __init__(self, picture_dir, response_dir, channel_moments, ndata):
         self.ndata = ndata
 
-        self.picture_path = picture_path
-        self.response_path = response_path
+        self.picture_path = picture_dir
+        self.response_path = response_dir
 
         self.picture_names = os.listdir(self.picture_path)
         self.picture_names = self.picture_names[0:ndata]
@@ -51,7 +51,7 @@ class Dataset(torch.utils.data.Dataset):
         x = torch.permute(x, dims=[2, 0, 1])
 
         y = np.load(self.response_path + "/" + self.picture_names[key])
-        y = torch.from_numpy(x).type(torch.FloatTensor)
+        y = torch.from_numpy(y).type(torch.FloatTensor)
 
         return x, y
 
