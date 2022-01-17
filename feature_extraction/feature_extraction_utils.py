@@ -30,14 +30,15 @@ class Dataset(torch.utils.data.Dataset):
 
         self.picture_path = picture_path
         self.response_path = response_path
-        self.picture_names = os.listdir(self.picture_path)[0:ndata]
-        self.response_names = os.listdir(self.response_path)[0:ndata]
+
+        self.picture_names = os.listdir(self.picture_path)
+        self.picture_names = self.picture_names[0:ndata]
 
         self.channelmeans = channel_moments[:, 0]
         self.channelstds = channel_moments[:, 1]
 
     def __len__(self):
-        return len(self.filenames)
+        return len(self.picture_names)
 
     def __getitem__(self, key):
         x = np.load(self.picture_path + "/" + self.picture_names[key])
