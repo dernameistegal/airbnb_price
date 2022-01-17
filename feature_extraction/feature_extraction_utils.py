@@ -46,20 +46,19 @@ class Dataset(torch.utils.data.Dataset):
         return x
 
 
-def compute_train_features(device, dataloader, feature_extractor, output_dim=[512, 14, 14]):
+def compute_train_features(device, dataloader, feature_extractor):
     feature_extractor.to(device)
     feature_extractor.eval()
 
-    ndata = len(dataloader.dataset)
-    output = torch.empty(ndata, output_dim[0], output_dim[1], output_dim[2])
+    output = []
     start, stop = 0, 0
 
     with torch.no_grad():
-        for batch in dataloader:
-            stop += len(batch)
-            output[start:stop, ...] = feature_extractor(batch.to(device))
-            start += len(batch)
+        for batch in tqdm(dataloader):
+            output.append(feature_extractor(batch.to(device)))
 
+    output = torch.cat(output, dim=0)
+    
     return output
 
 
