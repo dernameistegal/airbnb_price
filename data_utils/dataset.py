@@ -3,11 +3,11 @@ import pandas as pd
 
 
 class dataset(Dataset):
-    def __init__(self, datapath, columns):
-        data = pd.read_pickle(datapath)
+    def __init__(self, datadir):
+
+        data = pd.read_pickle(datadir)
         super().__init__()
         self.data = data
-        self.columns = columns
 
     def __getitem__(self, key):
         return self.data["log_price"].iloc[key], self.data[self.columns].iloc[key], self.data.index[key]

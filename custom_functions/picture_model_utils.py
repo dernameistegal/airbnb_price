@@ -1,6 +1,7 @@
 import torch
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -28,6 +29,7 @@ class Dataset(torch.utils.data.Dataset):
         x -= self.channelmeans
         x /= self.channelstds
         x = torch.permute(x, dims=[2, 0, 1])
+        plt.imshow(x)
 
         y = np.load(self.response_dir + "/" + self.picture_names[key])
         y = torch.from_numpy(y).type(torch.FloatTensor)

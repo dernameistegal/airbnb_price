@@ -25,12 +25,15 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=16, help='batch Size during training')
     parser.add_argument('--epoch', default=251, type=int, help='epoch to run')
     parser.add_argument('--learning_rate', default=0.001, type=float, help='initial learning rate')
-    parser.add_argument('--gpu', type=str, default='0', help='specify GPU devices')
+    parser.add_argument('--decay_rate', type=float, default=1e-4, help='weight decay')
     parser.add_argument('--optimizer', type=str, default='Adam', help='Adam or SGD')
     parser.add_argument('--log_dir', type=str, default=None, help='log path')
     parser.add_argument('--step_size', type=int, default=20, help='decay step for lr decay')
     parser.add_argument('--lr_decay', type=float, default=0.5, help='decay rate for lr decay')
-    parser.add_argument('--picture_path', type=str, default=None, help='use pictures in dataloader')
+
+    parser.add_argument('--data_path', type=str, default=None, help='path where data for dataloader is located')
+    parser.add_argument('--picture_path', type=str, default=None, help='path where picture data is located')
+    parser.add_argument('--split_seed', type=str, default=None, help='seed of train, val, testsplit')
 
     return parser.parse_args()
 
@@ -41,11 +44,9 @@ def main(args):
         logger.info(str)
         print(str)
 
-    '''HYPER PARAMETER'''
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-
     '''CREATE DIR'''
     timestr = str(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M'))
+
     exp_dir = Path('./log/')
     exp_dir.mkdir(exist_ok=True)
     exp_dir.mkdir(exist_ok=True)
@@ -54,8 +55,10 @@ def main(args):
     else:
         exp_dir = exp_dir.joinpath(args.log_dir)
     exp_dir.mkdir(exist_ok=True)
+
     checkpoints_dir = exp_dir.joinpath('checkpoints/')
     checkpoints_dir.mkdir(exist_ok=True)
+
     log_dir = exp_dir.joinpath('logs/')
     log_dir.mkdir(exist_ok=True)
 
@@ -78,38 +81,23 @@ def main(args):
     use_cuda = torch.cuda.is_available()
     device = torch.device('cuda:0' if use_cuda else 'cpu')
 
-    if use_cuda:
-        # define paths where split information is located for dataset
-        root = '/content/airbnb_price/data'
-        trainpath = "/trainsplit.npy"
-        testpath = "/valsplit.npy"
+    dataset = our_dataset(args.data_path)
+    trainset, valset, testset = torch.utils.data.random_split(dataset, [6500, 2451, 2451],
+                                                              generator=torch.Generator().manual_seed(args.seed))
 
-        # save split information for later purposes
-        trainsplit = np.load(root + trainpath)
-        testsplit = np.load(root + testpath)
+    np.save("testset_indices.npy", testset.indices)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=10)
+    valloader = torch.utils.data.DataLoader(valset, batch_size=args.batch_size, shuffle=True, num_workers=10)
 
-        split_dir = exp_dir.joinpath('split/')
-        split_dir.mkdir(exist_ok=True)
-        trainsplit_path = str(split_dir) + trainpath
-        testsplit_path = str(split_dir) + testpath
-
-        np.save(trainsplit_path, trainsplit)
-        np.save(testsplit_path, testsplit)
-
-    TRAIN_DATASET = our_dataset(root, trainpath, args.columns)
-    trainDataLoader = torch.utils.data.DataLoader(TRAIN_DATASET, batch_size=args.batch_size, shuffle=True, num_workers=10)
-    TEST_DATASET = our_dataset(root, testpath, args.columns)
-    testDataLoader = torch.utils.data.DataLoader(TEST_DATASET, batch_size=args.batch_size, shuffle=False, num_workers=10)
-    log_string("The number of training data is: %d" % len(TRAIN_DATASET))
-    log_string("The number of test data is: %d" % len(TEST_DATASET))
+    log_string("The number of training data is: %d" % len(trainset))
+    log_string("The number of test data is: %d" % len(valset))
 
 
     '''MODEL LOADING'''
     MODEL = importlib.import_module(args.model)
     shutil.copy('models/%s.py' % args.model, str(exp_dir))
-    shutil.copy('models/pointnet2_utils.py', str(exp_dir))
 
-    classifier = MODEL.get_model().to(device)
+    model = MODEL.get_model().to(device)
     criterion = MODEL.get_loss()
 
     def weights_init(m):
@@ -124,34 +112,34 @@ def main(args):
     try:
         checkpoint = torch.load(str(exp_dir) + '/checkpoints/best_model.pth')
         start_epoch = checkpoint['epoch']
-        classifier.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint['model_state_dict'])
 
         # metrics
         train_mse = checkpoint["train_mse"]
-        test_mse = checkpoint["test_mse"]
+        val_mse = checkpoint["val_mse"]
 
         log_string('Use pretrain model')
 
     except:
         log_string('No existing model, starting training from scratch...')
         start_epoch = 0
-        classifier = classifier.apply(weights_init)
+        model = model.apply(weights_init)
 
         # metrics
         train_mse = []
-        test_mse = []
+        val_mse = []
 
 
     if args.optimizer == 'Adam':
         optimizer = torch.optim.Adam(
-            classifier.parameters(),
+            model.parameters(),
             lr=args.learning_rate,
             betas=(0.9, 0.999),
             eps=1e-08,
-            weight_decay=args.decay_rate # weight decay todo
+            weight_decay=args.decay_rate
         )
     else:
-        optimizer = torch.optim.SGD(classifier.parameters(), lr=args.learning_rate, momentum=0.9)
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
 
     def bn_momentum_adjust(m, momentum):
         if isinstance(m, torch.nn.BatchNorm2d) or isinstance(m, torch.nn.BatchNorm1d):
@@ -171,26 +159,35 @@ def main(args):
     for epoch in range(start_epoch, args.epoch):
         mean_loss = []
 
-        '''adjust training parameters'''
         log_string('\nEpoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
-        '''Adjust learning rate and BN momentum'''
+
+        '''Adjust learning rate'''
         lr = max(args.learning_rate * (args.lr_decay ** (epoch // args.step_size)), LEARNING_RATE_CLIP)
         log_string('Learning rate:%f' % lr)
+
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
+
+        if epoch % args.step_size == 0:
+            print("lr updated to ", lr)
+
+        '''Adjust BN momentum'''
         momentum = MOMENTUM_ORIGINAL * (MOMENTUM_DECCAY ** (epoch // MOMENTUM_DECCAY_STEP))
         if momentum < 0.01:
             momentum = 0.01
-        # print('BN momentum updated to: %f' % momentum)
-        classifier = classifier.apply(lambda x: bn_momentum_adjust(x, momentum))
-        classifier = classifier.train()
+
+        if epoch % args.step_size == 0:
+            print('BN momentum updated to %f' % momentum)
+
+        model = model.apply(lambda x: bn_momentum_adjust(x, momentum))
+        model = model.train()
 
         '''learning one epoch'''
-        for i, (price, columns, id) in tqdm(enumerate(trainDataLoader), total=len(trainDataLoader), smoothing=0.9):
+        for i, (price, columns) in tqdm(enumerate(trainloader), total=len(trainloader), smoothing=0.9):
             optimizer.zero_grad()
             price = price.float().to(device)
             columns = columns.float().to(device)
-            pred = classifier(columns)
+            pred = model(columns)
             loss = criterion(pred, price)
 
             mean_loss.append(loss.item())
@@ -204,29 +201,29 @@ def main(args):
         with torch.no_grad():
             mean_loss = []
 
-            classifier = classifier.eval()
+            model = model.eval()
 
             '''apply current model to validation set'''
-            for i, (price, columns, id) in tqdm(enumerate(testDataLoader), total=len(testDataLoader), smoothing=0.9):
+            for i, (price, columns) in tqdm(enumerate(valloader), total=len(valloader), smoothing=0.9):
                 price = price.float().to(device)
                 columns = columns.float().to(device)
-                pred = classifier(columns)
+                pred = model(columns)
                 loss = criterion(pred, price)
 
                 mean_loss.append(loss.item())
 
-        test_mse.append(np.round(np.mean(mean_loss), 5))
-        log_string('Epoch %d test-rMSE: %f' % (epoch + 1, np.sqrt(test_mse[epoch])))
+        val_mse.append(np.round(np.mean(mean_loss), 5))
+        log_string('Epoch %d test-rMSE: %f' % (epoch + 1, np.sqrt(val_mse[epoch])))
 
-        if test_mse[epoch] >= np.max(test_mse):
+        if val_mse[epoch] <= np.min(val_mse):
             logger.info('Save model...')
             savepath = str(checkpoints_dir) + '/best_model.pth'
             log_string('Saving at %s' % savepath)
             state = {
                 'epoch': epoch+1,
                 'train_mse': train_mse,
-                'test_mse': test_mse
-                'model_state_dict': classifier.state_dict(),
+                'val_mse': val_mse,
+                'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
             }
             torch.save(state, savepath)
@@ -237,7 +234,7 @@ def main(args):
     # save performance measures
     mse_path = str(performance_dir) + '/mse.npy'
     rmse_path = str(performance_dir) + '/rmse.npy'
-    mse = np.array([train_mse, test_mse]).T
+    mse = np.array([train_mse, val_mse]).T
     rmse = np.sqrt(mse)
     np.save(mse_path, mse)
     np.save(rmse_path, rmse)
