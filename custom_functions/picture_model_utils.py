@@ -26,13 +26,14 @@ class Dataset(torch.utils.data.Dataset):
         # transform (to tensor and normalize)
         x = torch.from_numpy(x).type(torch.FloatTensor)
         x /= 255
-        x -= self.channelmeans
-        x /= self.channelstds
+        # x -= self.channelmeans
+        x -= torch.tensor([0.485, 0.456, 0.406])
+        # x /= self.channelstds
+        x /= torch.tensor([0.229, 0.224, 0.225])
         x = torch.permute(x, dims=[2, 0, 1])
-        plt.imshow(x)
 
         y = np.load(self.response_dir + "/" + self.picture_names[key])
         y = torch.from_numpy(y).type(torch.FloatTensor)
-        y = torch.log(y+0.1)
+        y = torch.log(y)
 
         return x, y
