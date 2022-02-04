@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, picture_dir, response_dir, channel_moments, ndata):
+    def __init__(self, picture_dir, response_dir, ndata):
         self.ndata = ndata
 
         self.picture_dir = picture_dir
@@ -13,9 +13,6 @@ class Dataset(torch.utils.data.Dataset):
 
         self.picture_names = os.listdir(self.picture_dir)
         self.picture_names = self.picture_names[0:ndata]
-
-        self.channelmeans = channel_moments[:, 0]
-        self.channelstds = channel_moments[:, 1]
 
     def __len__(self):
         return len(self.picture_names)
@@ -26,9 +23,7 @@ class Dataset(torch.utils.data.Dataset):
         # transform (to tensor and normalize)
         x = torch.from_numpy(x).type(torch.FloatTensor)
         x /= 255
-        # x -= self.channelmeans
         x -= torch.tensor([0.485, 0.456, 0.406])
-        # x /= self.channelstds
         x /= torch.tensor([0.229, 0.224, 0.225])
         x = torch.permute(x, dims=[2, 0, 1])
 
