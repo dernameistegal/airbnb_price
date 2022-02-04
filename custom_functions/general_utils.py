@@ -22,28 +22,30 @@ def train_val_test_split(listing_ids, train_size=0.7, random_state=42):
     return ids_train, ids_val, ids_test
 
 
-def plot(title, label, train_results, val_results, yscale='linear', save_path=None,
-         extra_pt=None, extra_pt_label=None):
+def plot(title, label, train_results, val_results, yscale='linear', legend=["Training", "Validation"],
+         thinning=3, save_path=None):
+
+    train_results = np.load(result_path)[:, 0]
+    val_results = np.load(result_path)[:, 1]
     epoch_array = np.arange(len(train_results)) + 1
-    train_label, val_label = "Training " + label.lower(), "Validation " + label.lower()
+
+    train_results = train_results[::thinning]
+    validation = val_results[::thinning]
+    epoch_array = epoch_array[::thinning]
 
     sns.set(style='ticks')
+    plt.scatter(epoch_array, train_results, alpha=1, s=15)
+    plt.scatter(epoch_array, validation, alpha=1, s=15)
 
-    plt.plot(epoch_array, train_results, epoch_array, val_results, linestyle='dashed', marker='o', zorder=-1)
-    legend = ['Train results', 'Validation results']
-
-    if extra_pt:
-        plt.scatter(extra_pt[0], extra_pt[1], c="k")
-        legend = ['Train results', 'Validation results', extra_pt_label]
-
+    legend = [legend[0], legend[1]]
     plt.legend(legend)
     plt.xlabel('Epoch')
     plt.ylabel(label)
     plt.yscale(yscale)
     plt.title(title)
-
-    # sns.despine(trim=True, offset=5)
     plt.title(title, fontsize=15)
+
     if save_path:
         plt.savefig(str(save_path), bbox_inches='tight')
+
     plt.show()
