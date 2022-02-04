@@ -4,17 +4,17 @@ import numpy as np
 
 
 class ThumbnailsDataset(torch.utils.data.Dataset):
-    def __init__(self, picture_dir, response_dir, split):
+    def __init__(self, thumbnail_dir, response, split):
 
-        self.split = ["thumbnail" + str(index) + ".npy" for index in split]
-        self.picture_dir = picture_dir
-        self.response_dir = response_dir
+        self.split = split
+        self.thumbnail_dir = thumbnail_dir
+        self.response = response
 
     def __len__(self):
         return len(self.split)
 
     def __getitem__(self, key):
-        x = np.load(self.picture_dir + "/" + self.split[key])
+        x = np.load(self.thumbnail_dir + "/thumbnail" + str(self.split[key]) + ".npy")
 
         # transform (to FloatTensor and normalize)
         x = torch.from_numpy(x).type(torch.FloatTensor)
@@ -23,7 +23,7 @@ class ThumbnailsDataset(torch.utils.data.Dataset):
         x /= torch.tensor([0.229, 0.224, 0.225])
         x = torch.permute(x, dims=[2, 0, 1])
 
-        y = np.load(self.response_dir + "/" + self.split[key])
+        y = self.response[key]
         y = torch.from_numpy(y).type(torch.FloatTensor)
         y = torch.log(y)
 
