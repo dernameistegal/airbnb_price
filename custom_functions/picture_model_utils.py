@@ -24,6 +24,6 @@ class ThumbnailsDataset(torch.utils.data.Dataset):
         x = torch.permute(x, dims=[2, 0, 1])
 
         y = self.response[self.split[key]]
-        y = torch.FloatTensor(y)
+        y = torch.FloatTensor([y])
 
         return x, y
