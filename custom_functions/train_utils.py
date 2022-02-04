@@ -3,10 +3,8 @@ import fastprogress
 import numpy as np
 import time
 
-ntrain, nval = 150, 50
 
-
-def train(dataloader, optimizer, model, loss_fn, device, master_bar):
+def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
     """Run one training epoch."""
 
     epoch_loss = []
@@ -37,7 +35,7 @@ def train(dataloader, optimizer, model, loss_fn, device, master_bar):
     return np.mean(epoch_loss), np.sqrt(np.mean(epoch_loss))
 
 
-def validate(dataloader, model, loss_fn, device, master_bar):
+def validate(dataloader, model, loss_fn, device, nval, master_bar):
     epoch_loss = []
 
     model.eval()
@@ -63,16 +61,16 @@ def validate(dataloader, model, loss_fn, device, master_bar):
 
 
 def run_training(model, optimizer, loss_function, device, num_epochs,
-                 train_dataloader, val_dataloader, verbose=False):
+                 train_dataloader, val_dataloader, ntrain=150, nval=50, verbose=False):
     start_time = time.time()
     master_bar = fastprogress.master_bar(range(num_epochs))
     train_losses, val_losses, train_rmse, val_rmse = [], [], [], []
     for epoch in master_bar:
         # Train the model
         epoch_train_loss, epoch_train_acc = train(train_dataloader, optimizer, model,
-                                                  loss_function, device, master_bar)
+                                                  loss_function, device, ntrain, master_bar)
         # Validate the model
-        epoch_val_loss, epoch_val_acc = validate(val_dataloader, model, loss_function, device, master_bar)
+        epoch_val_loss, epoch_val_acc = validate(val_dataloader, model, loss_function, device, nval, master_bar)
 
         # Save loss and acc for plotting and add increase of val_acc
         train_losses.append(epoch_train_loss)
