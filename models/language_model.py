@@ -5,7 +5,7 @@ import torch.nn as nn
 
 class LanguageBertNet(nn.Module):
     def __init__(self, fine_tune=False, with_attention_masks=True, cls_dropout_prob=0, modelstring="bert-base-uncased"):
-        super(SentimentClassifier, self).__init__()
+        super(LanguageBertNet, self).__init__()
 
         self.with_attention_masks = with_attention_masks
 
