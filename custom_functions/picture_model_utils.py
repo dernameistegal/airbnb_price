@@ -6,7 +6,7 @@ import numpy as np
 class ThumbnailsDataset(torch.utils.data.Dataset):
     def __init__(self, picture_dir, response_dir, split):
 
-        self.split = ["thumbnail" + index + ".npy" for index in split]
+        self.split = ["thumbnail" + str(index) + ".npy" for index in split]
         self.picture_dir = picture_dir
         self.response_dir = response_dir
 
