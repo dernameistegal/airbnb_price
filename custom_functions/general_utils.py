@@ -25,8 +25,6 @@ def train_val_test_split(listing_ids, train_size=0.7, random_state=42):
 def plot(title, label, train_results, val_results, yscale='linear', legend=["Training", "Validation"],
          thinning=3, save_path=None):
 
-    train_results = np.load(result_path)[:, 0]
-    val_results = np.load(result_path)[:, 1]
     epoch_array = np.arange(len(train_results)) + 1
 
     train_results = train_results[::thinning]
