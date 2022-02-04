@@ -23,7 +23,7 @@ class ThumbnailsDataset(torch.utils.data.Dataset):
         x /= torch.tensor([0.229, 0.224, 0.225])
         x = torch.permute(x, dims=[2, 0, 1])
 
-        y = self.response[key]
+        y = self.response[self.split[key]]
         y = torch.from_numpy(y).type(torch.FloatTensor)
         y = torch.log(y)
 
