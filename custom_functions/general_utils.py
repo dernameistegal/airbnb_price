@@ -2,6 +2,7 @@ import torch
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 
 def get_device(cuda_preference=True):
