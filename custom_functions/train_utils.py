@@ -61,7 +61,7 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
 
 
 def run_training(model, optimizer, loss_function, device, num_epochs,
-                 train_dataloader, val_dataloader, ntrain=150, nval=50, verbose=False):
+                 train_dataloader, val_dataloader, ntrain=150, nval=50, verbose=False, scheduler=None):
     start_time = time.time()
     master_bar = fastprogress.master_bar(range(num_epochs))
     train_losses, val_losses, train_rmse, val_rmse = [], [], [], []
@@ -82,6 +82,8 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
             print("Saving model...")
             savepath = "/content/checkpoints/checkpoint.pt"
             torch.save(state, savepath)
+        if scheduler:
+            scheduler.step()
         if verbose:
             master_bar.write(
                 f'Train loss: {epoch_train_loss:.2f}, val loss: {epoch_val_loss:.2f}, train rmse: {epoch_train_acc:.3f}, val rmse {epoch_val_acc:.3f}')
