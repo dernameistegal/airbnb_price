@@ -3,6 +3,8 @@ import fastprogress
 import numpy as np
 import time
 
+scaler = torch.cuda.amp.GradScaler()
+
 
 def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
     """Run one training epoch."""
@@ -15,15 +17,15 @@ def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
         model.train()
 
         # Forward pass
-        labels_pred = model(ids, masks)[0]
-        labels_pred = torch.squeeze(labels_pred)
-
-        # Compute loss
-        loss = loss_fn(labels_pred, labels)
+        with torch.cuda.amp.autocast():
+            labels_pred = model(ids, masks)[0]
+            labels_pred = torch.squeeze(labels_pred)
+            loss = loss_fn(labels_pred, labels)
 
         # Backward pass
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
         # For plotting the train loss, save it for each sample
         epoch_loss.append(loss.item())
