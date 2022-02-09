@@ -14,7 +14,7 @@ def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
     for pic_embdg, description_embdg, reviews_embdg, features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
         pic_embdg, description_embdg, reviews_embdg, features, label = \
             pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
-            features.to(device).float(), label.to(device)
+            features.to(device).float(), label.to(device).float()
         optimizer.zero_grad()
         model.train()
 
@@ -48,7 +48,7 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
         for pic_embdg, description_embdg, reviews_embdg, features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
             pic_embdg, description_embdg, reviews_embdg, features, label = \
                 pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
-                features.to(device).float(), label.to(device)
+                features.to(device).float(), label.to(device).float()
 
             # make a prediction on validation set
             labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features, label)
