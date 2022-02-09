@@ -11,14 +11,16 @@ def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
 
     epoch_loss = []
     i = 0
-    for ids, labels, masks in fastprogress.progress_bar(dataloader, parent=master_bar):
-        ids, labels, masks = ids.to(device), labels.to(device).float(), masks.to(device)
+    for pic_embdg, description_embdg, reviews_embdg, features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
+        pic_embdg, description_embdg, reviews_embdg, features, label = \
+            pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
+            features.to(device).float(), label.to(device)
         optimizer.zero_grad()
         model.train()
 
         # Forward pass
         with torch.cuda.amp.autocast():
-            labels_pred = model(ids, masks)[0]
+            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features)
             labels_pred = torch.squeeze(labels_pred)
             loss = loss_fn(labels_pred, labels)
 
@@ -43,11 +45,13 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
     model.eval()
     i = 0
     with torch.no_grad():
-        for ids, labels, masks in fastprogress.progress_bar(dataloader, parent=master_bar):
-            ids, labels, masks = ids.to(device), labels.to(device).float(), masks.to(device)
+        for pic_embdg, description_embdg, reviews_embdg, features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
+            pic_embdg, description_embdg, reviews_embdg, features, label = \
+                pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
+                features.to(device).float(), label.to(device)
 
             # make a prediction on validation set
-            labels_pred = model(ids, masks)[0]
+            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features, label)
             labels_pred = torch.squeeze(labels_pred)
 
             # Compute loss

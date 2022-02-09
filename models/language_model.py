@@ -28,3 +28,12 @@ class LanguageBertNet(nn.Module):
         x = F.relu(self.linear1(embedding))
         x = self.linear2(x)
         return x, attentions
+
+    def genembeddings(self, input_ids, attention_mask=None):
+        if not self.with_attention_masks:
+            attention_mask = None
+        result = self.bert(input_ids, attention_mask)
+        embedding = result["last_hidden_state"][:, 0, :]
+        embedding = self.drop1(embedding)
+        x = F.relu(self.linear1(embedding))
+        return x
