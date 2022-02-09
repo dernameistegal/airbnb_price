@@ -18,6 +18,6 @@ class EnsembleModel(nn.Module):
         x = self.linear1(embeddings)
         x = self.linear2(F.relu(x))
         x = self.linear3(F.relu(x))
-        x = self.linear4(F.relu(x))
+        x = self.linear4(x)
 
         return x
