@@ -51,7 +51,7 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
                 features.to(device).float(), label.to(device).float()
 
             # make a prediction on validation set
-            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features, label)
+            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features)
             labels_pred = torch.squeeze(labels_pred)
 
             # Compute loss
