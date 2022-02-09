@@ -22,7 +22,7 @@ def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
         with torch.cuda.amp.autocast():
             labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features)
             labels_pred = torch.squeeze(labels_pred)
-            loss = loss_fn(labels_pred, labels)
+            loss = loss_fn(labels_pred, label)
 
         # Backward pass
         scaler.scale(loss).backward()
@@ -55,7 +55,7 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
             labels_pred = torch.squeeze(labels_pred)
 
             # Compute loss
-            loss = loss_fn(labels_pred, labels)
+            loss = loss_fn(labels_pred, label)
 
             # For plotting the train loss, save it for each sample
             epoch_loss.append(loss.item())
