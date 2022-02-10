@@ -106,9 +106,9 @@ class EnsembleDataset2(Dataset):
                           if col not in self.cat_cols + [self.desc_col, self.rev_col, self.thumb_col, self.output_col]]
 
         # actual data that belongs to predictors
-        self.desc_X = data[self.desc_col].astype(np.float64).values.reshape(-1, 1)
+        self.desc_X = data[self.desc_col].values.reshape(-1, 1)
         self.desc_X = np.apply_along_axis(np.concatenate, 1, self.desc_X)
-        self.desc_X = torch.from_numpy(self.desc_X)
+        self.desc_X = torch.from_numpy(self.desc_X.astype(np.float64))
 
         self.rev_X = data[self.rev_col].astype(np.float64).values.reshape(-1, 1)
         self.rev_X = np.apply_along_axis(np.concatenate, 1, self.rev_X)

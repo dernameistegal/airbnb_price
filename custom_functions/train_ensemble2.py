@@ -1,9 +1,9 @@
-import torch
-import fastprogress
-import numpy as np
-import time
 
-scaler = torch.cuda.amp.GradScaler()
+############################################################################
+##########################run training with embeddings
+############################################################################
+#self.thumb_X[idx], self.desc_X[idx], self.rev_X[idx], self.cont_X[idx], self.cat_X[idx], self.output[idx]
+#def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
 
 def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
@@ -11,16 +11,18 @@ def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
 
     epoch_loss = []
     i = 0
-    for pic_embdg, description_embdg, reviews_embdg, features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
-        pic_embdg, description_embdg, reviews_embdg, features, label = \
-            pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
-            features.to(device).float(), label.to(device).float()
+
+    for pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
+        pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label = \
+            pic_embdg.to(device), description_embdg.to(device), reviews_embdg.to(device), \
+            cont_features.to(device), cat_features.to(device), label.to(device)
+
         optimizer.zero_grad()
         model.train()
 
         # Forward pass
         with torch.cuda.amp.autocast():
-            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features)
+            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features)
             labels_pred = torch.squeeze(labels_pred)
             loss = loss_fn(labels_pred, label)
 
@@ -45,13 +47,14 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
     model.eval()
     i = 0
     with torch.no_grad():
-        for pic_embdg, description_embdg, reviews_embdg, features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
-            pic_embdg, description_embdg, reviews_embdg, features, label = \
-                pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
-                features.to(device).float(), label.to(device).float()
+        for pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label in fastprogress.progress_bar(
+                dataloader, parent=master_bar):
+            pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label = \
+                pic_embdg.to(device), description_embdg.to(device), reviews_embdg.to(device), \
+                cont_features.to(device), cat_features.to(device), label.to(device)
 
             # make a prediction on validation set
-            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, features)
+            labels_pred = model(pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features)
             labels_pred = torch.squeeze(labels_pred)
 
             # Compute loss
@@ -97,6 +100,3 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
     time_elapsed = np.round(time.time() - start_time, 0).astype(int)
     print(f'Finished training after {time_elapsed} seconds.')
     return train_losses, val_losses, train_rmse, val_rmse
-
-
-
