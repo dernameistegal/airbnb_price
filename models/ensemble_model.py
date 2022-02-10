@@ -101,6 +101,7 @@ class EnsembleDataset2(Dataset):
         self.rev_col = rev_col
         self.thumb_col = thumb_col
         self.cat_cols = cat_cols
+        self.output_col = output_col
         self.cont_cols = [col for col in data.columns
                           if col not in self.cat_cols + [self.desc_col, self.rev_col, self.thumb_col, self.output_col]]
 
