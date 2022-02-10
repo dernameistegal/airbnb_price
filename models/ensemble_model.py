@@ -82,7 +82,7 @@ class EnsembleModel2(nn.Module):
         x = torch.cat([x, normalized_cont_data], dim=1)
 
         for lin_layer, dropout_layer, bn_layer in \
-                zip(self.lin_layers, self.droput_layers, self.bn_layers):
+                zip(self.lin_layers, self.dropout_layers, self.bn_layers):
             x = F.relu(lin_layer(x))
             x = bn_layer(x)
             x = dropout_layer(x)
