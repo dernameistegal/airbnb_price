@@ -26,7 +26,7 @@ class EnsembleModel(nn.Module):
 # requires label encoding for categories
 class EnsembleModel2(nn.Module):
 
-    def __init__(self, no_of_thumb=100, no_of_desc=100, no_of_rev=100, no_of_cont, cat_emb_dims, lin_layer_sizes):
+    def __init__(self, no_of_thumb, no_of_desc, no_of_rev, no_of_cont, cat_emb_dims, lin_layer_sizes):
         super().__init__()
 
         # number of features for different feature types
