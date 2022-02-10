@@ -3,6 +3,10 @@ import fastprogress
 import numpy as np
 import time
 
+
+scaler = torch.cuda.amp.GradScaler()
+
+
 ############################################################################
 ##########################run training with embeddings
 ############################################################################
