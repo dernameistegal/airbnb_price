@@ -73,7 +73,7 @@ class EnsembleModel2(nn.Module):
              for i, cat_emb_layer in enumerate(self.cat_emb_layers)]
 
         x = torch.cat(x, 1)
-        x = self.emb_dropout_layer(x)
+        x = self.cat_dropout_layer(x)
 
         # normalize data of other features and apply dropout
         cont_data = torch.cat([thumb_data, desc_data, rev_data, cont_data], dim=1)
