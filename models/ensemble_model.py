@@ -55,7 +55,7 @@ class EnsembleModel2(nn.Module):
         nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
 
         # Batch Norm Layers
-        self.first_bn_layer = nn.BatchNorm1d(self.no_of_thumb + self.no_of_desc + self.no_of_rev, self.no_of_cont)
+        self.first_bn_layer = nn.BatchNorm1d(self.no_of_thumb + self.no_of_desc + self.no_of_rev + self.no_of_cont)
         self.bn_layers = nn.ModuleList([nn.BatchNorm1d(size)
                                         for size in lin_layer_sizes])
 
