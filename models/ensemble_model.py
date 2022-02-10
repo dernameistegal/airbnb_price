@@ -26,7 +26,7 @@ class EnsembleModel(nn.Module):
 # requires label encoding for categories
 class EnsembleModel2(nn.Module):
 
-    def __init__(self, no_of_thumb, no_of_desc, no_of_rev, no_of_cont, cat_emb_dims, lin_layer_sizes):
+    def __init__(self, no_of_thumb=100, no_of_desc=100, no_of_rev=100, no_of_cont, cat_emb_dims, lin_layer_sizes):
         super().__init__()
 
         # number of features for different feature types
@@ -103,29 +103,29 @@ class EnsembleDataset2(Dataset):
         self.cat_cols = cat_cols
         self.output_col = output_col
         self.cont_cols = [col for col in data.columns
-                          if col not in self.cat_cols + [self.desc_col, self.rev_col, self.thumb_col, self.output_col]]
+                          if col not in (self.cat_cols + self.desc_col + self.rev_col + self.thumb_col + self.output_col)]
 
         # actual data that belongs to predictors
         self.desc_X = data[self.desc_col].values.reshape(-1, 1)
         self.desc_X = np.apply_along_axis(np.concatenate, 1, self.desc_X)
         self.desc_X = torch.from_numpy(self.desc_X.astype(np.float64))
 
-        self.rev_X = data[self.rev_col].astype(np.float64).values.reshape(-1, 1)
+        self.rev_X = data[self.rev_col].values.reshape(-1, 1)
         self.rev_X = np.apply_along_axis(np.concatenate, 1, self.rev_X)
-        self.rev_X = torch.from_numpy(self.rev_X)
+        self.rev_X = torch.from_numpy(self.rev_X.astype(np.float64))
 
-        self.thumb_X = data[self.thumb_col].astype(np.float64).values.reshape(-1, 1)
+        self.thumb_X = data[self.thumb_col].values.reshape(-1, 1)
         self.thumb_X = np.apply_along_axis(np.concatenate, 1, self.thumb_X)
-        self.thumb_X = torch.from_numpy(self.thumb_X)
+        self.thumb_X = torch.from_numpy(self.thumb_X.astype(np.float64))
 
-        self.cont_X = data[self.cont_cols].astype(np.float64).values
-        self.cont_X = torch.from_numpy(self.cont_X)
+        self.cont_X = data[self.cont_cols].values
+        self.cont_X = torch.from_numpy(self.cont_X.astype(np.float64))
 
-        self.cat_X = data[self.cat_cols].astype(np.int64).values
-        self.cat_X = torch.from_numpy(self.cat_X)
+        self.cat_X = data[self.cat_cols].values
+        self.cat_X = torch.from_numpy(self.cat_X.astype(np.int64))
 
-        self.output = data[output_col].astype(np.float64).values.reshape(-1, 1)
-        self.output = torch.from_numpy(self.output)
+        self.output = data[output_col].values.reshape(-1, 1)
+        self.output = torch.from_numpy(self.output.astype(np.float64))
 
     def __len__(self):
         return self.length

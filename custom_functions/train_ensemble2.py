@@ -1,3 +1,7 @@
+import torch
+import fastprogress
+import numpy as np
+import time
 
 ############################################################################
 ##########################run training with embeddings
