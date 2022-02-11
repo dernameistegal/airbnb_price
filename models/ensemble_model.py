@@ -97,7 +97,7 @@ class EnsembleModel2(nn.Module):
 
 
 class EnsembleDataset2(Dataset):
-    def __init__(self, data, desc_col, rev_col, thumb_col, cat_cols, output_col):
+    def __init__(self, data, thumb_col, desc_col, rev_col, cat_cols, output_col):
         self.length = len(data)
 
         # lists of columns that belong to predictor type (category, continuous, description, ...)
