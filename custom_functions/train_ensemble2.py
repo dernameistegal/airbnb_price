@@ -23,7 +23,7 @@ def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
     for pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
         pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label = \
             pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
-            cont_features.to(device).float(), cat_features.to(device).float(), label.to(device).float()
+            cont_features.to(device).float(), cat_features.to(device).int(), label.to(device).float()
 
         optimizer.zero_grad()
         model.train()
