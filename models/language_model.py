@@ -16,18 +16,17 @@ class LanguageBertNet(nn.Module):
 
         # model for embeddings
         self.bn1 = nn.BatchNorm1d(768)
-        self.drop1 = nn.Dropout(cls_dropout_prob)
-        self.linear1 = nn.Linear(768, 100)
         self.bn2 = nn.BatchNorm1d(100)
+
+        self.drop1 = nn.Dropout(cls_dropout_prob)
         self.drop2 = nn.Dropout(0.5)
+
+        self.linear1 = nn.Linear(768, 100)
         self.linear2 = nn.Linear(100, 1)
 
-
     def forward(self, input_ids, attention_mask=None):
-
         if not self.with_attention_masks:
             attention_mask = None
-
         # Bert result
         result = self.bert(input_ids, attention_mask)
         attentions = result["attentions"]
@@ -38,7 +37,7 @@ class LanguageBertNet(nn.Module):
         embedding = self.drop1(embedding)
 
         # processing of embeddings
-        x = self.bn(F.relu(self.linear1(embedding)))
+        x = self.bn2(F.relu(self.linear1(embedding)))
         x = self.drop2(x)
         x = self.linear2(x)
 
@@ -47,7 +46,6 @@ class LanguageBertNet(nn.Module):
     def genembeddings(self, input_ids, attention_mask=None):
         if not self.with_attention_masks:
             attention_mask = None
-
         # Bert result
         result = self.bert(input_ids, attention_mask)
         attentions = result["attentions"]
@@ -55,7 +53,7 @@ class LanguageBertNet(nn.Module):
         # embeddings from Bert result
         embedding = result["last_hidden_state"][:, 0, :]
         embedding = self.bn1(embedding)
-
-        x = self.bn(F.relu(self.linear1(embedding)))
+        embedding = self.drop1(embedding)
+        x = self.bn2(self.linear1(embedding))
 
         return x
