@@ -55,7 +55,7 @@ class EnsembleModel2(nn.Module):
         # nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
 
         # Batch Norm Layers
-        self.first_bn_layer = nn.BatchNorm1d(self.no_of_thumb + self.no_of_desc + self.no_of_rev + self.no_of_cont)
+        self.bn_cont_features = nn.BatchNorm1d(self.no_of_cont)
         self.bn_layers = nn.ModuleList([nn.BatchNorm1d(size)
                                         for size in lin_layer_sizes])
 
@@ -63,23 +63,30 @@ class EnsembleModel2(nn.Module):
         self.thumb_dropout = nn.Dropout(0.5)
         self.desc_dropout = nn.Dropout(0.5)
         self.rev_dropout = nn.Dropout(0.5)
-        self.cat_dropout_layer = nn.Dropout(0.5)
-        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.5)] * len(lin_layer_sizes))
+        self.cont_dropout = nn.Dropout(0.2)  # todo
+        self.cat_dropout_layer = nn.Dropout(0.2)  # todo
+        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.4)] * len(lin_layer_sizes))
 
     def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
         # generate embeddings and apply dropout
-        x = [cat_emb_layer(cat_data[:, i])
-             for i, cat_emb_layer in enumerate(self.cat_emb_layers)]
+        cat_data = [cat_emb_layer(cat_data[:, i])
+                    for i, cat_emb_layer in enumerate(self.cat_emb_layers)]
 
-        x = torch.cat(x, 1)
-        x = self.cat_dropout_layer(x)
+        cat_data = torch.cat(cat_data, 1)
+        cat_data = self.cat_dropout_layer(cat_data)
+        print("catdatashape: ", cat_data.shape)  # todo
 
-        # normalize data of other features and apply dropout
+        # dropout on precomputed embeddings and batchnorm on continuous features which were not normalized yet
+        thumb_data = self.thumb_dropout(thumb_data)
+        desc_data = self.desc_dropout(desc_data)
+        rev_data = self.rev_dropout(rev_data)
+        cont_data = self.cont_dropout(self.bn_cont_features(cont_data))
         cont_data = torch.cat([thumb_data, desc_data, rev_data, cont_data], dim=1)
-        normalized_cont_data = self.first_bn_layer(cont_data)
+        print("contdatashape: ", cont_data.shape)  # todo
 
-        x = torch.cat([x, normalized_cont_data], dim=1)
+        x = torch.cat([cont_data, cat_data], dim=1)
+        print("xshape: ", x.shape)  # todo
 
         for lin_layer, dropout_layer, bn_layer in \
                 zip(self.lin_layers, self.linear_droput_layers, self.bn_layers):
