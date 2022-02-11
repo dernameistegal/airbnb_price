@@ -16,8 +16,8 @@ class EnsembleModel(nn.Module):
     def forward(self, pic_embedding, description_embedding, reviews_embedding, features):
         embeddings = torch.hstack((pic_embedding, description_embedding, reviews_embedding, features))
 
-        x = self.linear1(embeddings)
-        x = self.linear2(F.relu(x))
+        x = F.relu(self.linear1(embeddings))
+        x = F.relu(self.linear2(x))
         x = self.linear3(x)
 
         return x
@@ -48,11 +48,11 @@ class EnsembleModel2(nn.Module):
                                         [nn.Linear(lin_layer_sizes[i], lin_layer_sizes[i + 1])
                                          for i in range(len(lin_layer_sizes) - 1)])
 
-        for lin_layer in self.lin_layers:
-            nn.init.kaiming_normal_(lin_layer.weight.data)
+        # for lin_layer in self.lin_layers:
+        #     nn.init.kaiming_normal_(lin_layer.weight.data)
 
         self.last_lin_layer = nn.Linear(lin_layer_sizes[-1], 1)
-        nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
+        # nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
 
         # Batch Norm Layers
         self.first_bn_layer = nn.BatchNorm1d(self.no_of_thumb + self.no_of_desc + self.no_of_rev, self.no_of_cont)
