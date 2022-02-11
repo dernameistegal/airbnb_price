@@ -75,7 +75,6 @@ class EnsembleModel2(nn.Module):
 
         cat_data = torch.cat(cat_data, 1)
         cat_data = self.cat_dropout_layer(cat_data)
-        print("catdatashape: ", cat_data.shape)  # todo
 
         # dropout on precomputed embeddings and batchnorm on continuous features which were not normalized yet
         thumb_data = self.thumb_dropout(thumb_data)
@@ -83,10 +82,8 @@ class EnsembleModel2(nn.Module):
         rev_data = self.rev_dropout(rev_data)
         cont_data = self.cont_dropout(self.bn_cont_features(cont_data))
         cont_data = torch.cat([thumb_data, desc_data, rev_data, cont_data], dim=1)
-        print("contdatashape: ", cont_data.shape)  # todo
 
         x = torch.cat([cont_data, cat_data], dim=1)
-        print("xshape: ", x.shape)  # todo
 
         for lin_layer, dropout_layer, bn_layer in \
                 zip(self.lin_layers, self.linear_droput_layers, self.bn_layers):
