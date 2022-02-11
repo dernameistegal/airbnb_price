@@ -59,7 +59,7 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
                 dataloader, parent=master_bar):
             pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label = \
                 pic_embdg.to(device).float(), description_embdg.to(device).float(), reviews_embdg.to(device).float(), \
-                cont_features.to(device).float(), cat_features.to(device).float(), label.to(device).float()
+                cont_features.to(device).float(), cat_features.to(device).int(), label.to(device).float()
             print(cont_features)
             # make a prediction on validation set
             labels_pred = model(pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features)
