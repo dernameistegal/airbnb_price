@@ -55,7 +55,7 @@ class EnsembleModel2(nn.Module):
         # nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
 
         # Batch Norm Layers
-        self.first_bn_layer = nn.BatchNorm1d(self.no_of_thumb + self.no_of_desc + self.no_of_rev, self.no_of_cont)
+        self.first_bn_layer = nn.BatchNorm1d(self.no_of_thumb + self.no_of_desc + self.no_of_rev + self.no_of_cont)
         self.bn_layers = nn.ModuleList([nn.BatchNorm1d(size)
                                         for size in lin_layer_sizes])
 
@@ -73,7 +73,7 @@ class EnsembleModel2(nn.Module):
              for i, cat_emb_layer in enumerate(self.cat_emb_layers)]
 
         x = torch.cat(x, 1)
-        x = self.emb_dropout_layer(x)
+        x = self.cat_dropout_layer(x)
 
         # normalize data of other features and apply dropout
         cont_data = torch.cat([thumb_data, desc_data, rev_data, cont_data], dim=1)
@@ -82,12 +82,12 @@ class EnsembleModel2(nn.Module):
         x = torch.cat([x, normalized_cont_data], dim=1)
 
         for lin_layer, dropout_layer, bn_layer in \
-                zip(self.lin_layers, self.droput_layers, self.bn_layers):
+                zip(self.lin_layers, self.linear_droput_layers, self.bn_layers):
             x = F.relu(lin_layer(x))
             x = bn_layer(x)
             x = dropout_layer(x)
 
-        x = self.output_layer(x)
+        x = self.last_lin_layer(x)
 
         return x
 
@@ -97,34 +97,35 @@ class EnsembleDataset2(Dataset):
         self.length = len(data)
 
         # lists of columns that belong to predictor type (category, continuous, description, ...)
-        self.des_col = desc_col
+        self.desc_col = desc_col
         self.rev_col = rev_col
         self.thumb_col = thumb_col
         self.cat_cols = cat_cols
+        self.output_col = output_col
         self.cont_cols = [col for col in data.columns
-                          if col not in self.cat_cols + [self.desc_col, self.rev_col, self.thumb_col, self.output_col]]
+                          if col not in (self.cat_cols + self.desc_col + self.rev_col + self.thumb_col + self.output_col)]
 
         # actual data that belongs to predictors
-        self.desc_X = data[self.des_col].astype(np.float64).values.reshape(-1, 1)
+        self.desc_X = data[self.desc_col].values.reshape(-1, 1)
         self.desc_X = np.apply_along_axis(np.concatenate, 1, self.desc_X)
-        self.desc_X = torch.from_numpy(self.desc_X)
+        self.desc_X = torch.from_numpy(self.desc_X.astype(np.float32))
 
-        self.rev_X = data[self.rev_col].astype(np.float64).values.reshape(-1, 1)
+        self.rev_X = data[self.rev_col].values.reshape(-1, 1)
         self.rev_X = np.apply_along_axis(np.concatenate, 1, self.rev_X)
-        self.rev_X = torch.from_numpy(self.rev_X)
+        self.rev_X = torch.from_numpy(self.rev_X.astype(np.float32))
 
-        self.thumb_X = data[self.thumb_col].astype(np.float64).values.reshape(-1, 1)
+        self.thumb_X = data[self.thumb_col].values.reshape(-1, 1)
         self.thumb_X = np.apply_along_axis(np.concatenate, 1, self.thumb_X)
-        self.thumb_X = torch.from_numpy(self.thumb_X)
+        self.thumb_X = torch.from_numpy(self.thumb_X.astype(np.float32))
 
-        self.cont_X = data[self.cont_cols].astype(np.float64).values
-        self.cont_X = torch.from_numpy(self.cont_X)
+        self.cont_X = data[self.cont_cols].values
+        self.cont_X = torch.from_numpy(self.cont_X.astype(np.float32))
 
-        self.cat_X = data[self.cat_cols].astype(np.int64).values
-        self.cat_X = torch.from_numpy(self.cat_X)
+        self.cat_X = data[self.cat_cols].values
+        self.cat_X = torch.from_numpy(self.cat_X.astype(np.int32))
 
-        self.output = data[output_col].astype(np.float64).values.reshape(-1, 1)
-        self.output = torch.from_numpy(self.output)
+        self.output = data[output_col].values.reshape(-1, 1)
+        self.output = torch.from_numpy(self.output.astype(np.float32))
 
     def __len__(self):
         return self.length
