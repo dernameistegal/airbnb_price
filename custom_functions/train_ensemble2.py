@@ -84,7 +84,7 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
     train_losses, val_losses, train_rmse, val_rmse = [], [], [], []
     for epoch in master_bar:
         # Train the model
-        epoch_train_loss, epoch_train_acc = train(train_dataloader, optimizer, model,
+        epoch_train_loss, epoch_train_loss_sqrt = train(train_dataloader, optimizer, model,
                                                   loss_function, device, ntrain, master_bar)
         # Validate the model
         epoch_val_loss, epoch_val_acc = validate(val_dataloader, model, loss_function, device, nval, master_bar)
@@ -92,8 +92,9 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
         # Save loss and acc for plotting and add increase of val_acc
         train_losses.append(epoch_train_loss)
         val_losses.append(epoch_val_loss)
-        train_rmse.append(epoch_train_acc)
+        train_rmse.append(epoch_train_loss_sqrt)
         val_rmse.append(epoch_val_acc)
+
         if val_rmse[-1] <= np.min(val_rmse):
             state = model.state_dict()
             print("Saving model...")
@@ -103,7 +104,7 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
             scheduler.step()
         if verbose:
             master_bar.write(
-                f'Train loss: {epoch_train_loss:.2f}, val loss: {epoch_val_loss:.2f}, train rmse: {epoch_train_acc:.3f}, val rmse {epoch_val_acc:.3f}')
+                f'Epoch: {epoch}, Train loss: {epoch_train_loss:.2f}, val loss: {epoch_val_loss:.2f}, train rmse: {epoch_train_loss_sqrt:.3f}, val rmse {epoch_val_acc:.3f}')
 
     time_elapsed = np.round(time.time() - start_time, 0).astype(int)
     print(f'Finished training after {time_elapsed} seconds.')
