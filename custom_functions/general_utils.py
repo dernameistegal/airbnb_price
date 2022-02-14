@@ -23,28 +23,24 @@ def train_val_test_split(listing_ids, train_size=0.7, random_state=42):
     return ids_train, ids_val, ids_test
 
 
-def plot(title, label, train_results, val_results, yscale='linear', legend=["Training", "Validation"],
-         thinning=3, save_path=None):
+def plot(title, label, training, validation, yscale='linear', legend=["Training", "Validation"],
+         thinning=1, save_path=None, size=(5,4)):
 
-    epoch_array = np.arange(len(train_results)) + 1
-
-    train_results = train_results[::thinning]
-    validation = val_results[::thinning]
+    training = training[::thinning]
+    validation = validation[::thinning]
     epoch_array = epoch_array[::thinning]
+    plt.figure(figsize=size)
 
     sns.set(style='ticks')
-    plt.scatter(epoch_array, train_results, alpha=1, s=15)
-    plt.scatter(epoch_array, validation, alpha=1, s=15)
-
+    plt.plot(epoch_array, training,linestyle='dashed', marker='o', zorder=-1)
+    plt.plot(epoch_array, validation, linestyle='dashed', marker='o', zorder=-1)
     legend = [legend[0], legend[1]]
     plt.legend(legend)
     plt.xlabel('Epoch')
     plt.ylabel(label)
     plt.yscale(yscale)
-    plt.title(title)
     plt.title(title, fontsize=15)
 
     if save_path:
-        plt.savefig(str(save_path), bbox_inches='tight')
-
+        plt.savefig(str(save_path), bbox_inches='tight', format="svg", transparent=True)
     plt.show()
