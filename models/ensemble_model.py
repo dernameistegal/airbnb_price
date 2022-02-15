@@ -65,7 +65,7 @@ class EnsembleModel2(nn.Module):
         self.rev_dropout = nn.Dropout(0.5)
         self.cont_dropout = nn.Dropout(0.2)  # todo
         self.cat_dropout_layer = nn.Dropout(0.2)  # todo
-        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.5)] * len(lin_layer_sizes))
+        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.2)] * len(lin_layer_sizes))
 
     def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
