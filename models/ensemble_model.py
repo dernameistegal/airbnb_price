@@ -94,6 +94,8 @@ class EnsembleModel2(nn.Module):
 
         if not len(self.cat_emb_layers) == 0:
             x = torch.cat([cont_data, cat_data], dim=1)
+        else:
+            x = cont_data
 
         if self.use_bn_layers:
             for lin_layer, dropout_layer, bn_layer in \
