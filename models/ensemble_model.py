@@ -64,8 +64,8 @@ class EnsembleModel2(nn.Module):
         self.desc_dropout = nn.Dropout(0.5)
         self.rev_dropout = nn.Dropout(0.5)
         self.cont_dropout = nn.Dropout(0.2)  # todo
-        self.cat_dropout_layer = nn.Dropout(0.2)  # todo
-        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.2)] * len(lin_layer_sizes))
+        self.cat_dropout_layer = nn.Dropout(0.4)  # todo
+        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.4)] * len(lin_layer_sizes))
 
     def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
@@ -85,9 +85,9 @@ class EnsembleModel2(nn.Module):
 
         x = torch.cat([cont_data, cat_data], dim=1)
 
-        for lin_layer, dropout_layer in \
-                zip(self.lin_layers, self.linear_droput_layers):
-            x = F.relu(lin_layer(x))
+        for lin_layer, dropout_layer, bn_layer in \
+                zip(self.lin_layers, self.linear_droput_layers, self.bn_layers):
+            x = bn_layer(F.relu(lin_layer(x)))
             x = dropout_layer(x)
 
         x = self.last_lin_layer(x)
