@@ -85,7 +85,7 @@ class EnsembleModel2(nn.Module):
 
         x = torch.cat([cont_data, cat_data], dim=1)
 
-        for lin_layer, dropout_layer, bn_layer in \
+        for lin_layer, dropout_layer in \
                 zip(self.lin_layers, self.linear_droput_layers):
             x = F.relu(lin_layer(x))
             x = dropout_layer(x)
