@@ -26,7 +26,8 @@ class EnsembleModel(nn.Module):
 # requires label encoding for categories
 class EnsembleModel2(nn.Module):
 
-    def __init__(self, no_of_thumb, no_of_desc, no_of_rev, no_of_cont, cat_emb_dims, lin_layer_sizes):
+    def __init__(self, no_of_thumb, no_of_desc, no_of_rev, no_of_cont, cat_emb_dims, lin_layer_sizes, thumb_dropout,
+                 desc_dropout, rev_dropout, cont_dropout, cat_dropout, linear_layer_dropout, bn_layers=False):
         super().__init__()
 
         # number of features for different feature types
@@ -34,11 +35,19 @@ class EnsembleModel2(nn.Module):
         self.no_of_desc = no_of_desc
         self.no_of_rev = no_of_rev
         self.no_of_cont = no_of_cont
-        self.no_of_cat = np.sum([y for x, y in cat_emb_dims])
+        self.use_bn_layers = bn_layers
+
+        if len(cat_emb_dims) == 0:
+            self.no_of_cat = 0
+        else:
+            self.no_of_cat = np.sum([y for x, y in cat_emb_dims])
 
         # Embedding layers
-        self.cat_emb_layers = nn.ModuleList([nn.Embedding(x, y)
-                                             for x, y in cat_emb_dims])
+        if len(cat_emb_dims) == 0:
+            self.cat_emb_layers = nn.ModuleList([nn.Embedding(x, y) for x, y in cat_emb_dims])
+        else:
+            self.cat_emb_layers = 0
+
         # Linear Layers
         first_lin_layer = nn.Linear(
             self.no_of_thumb + self.no_of_desc + self.no_of_rev + self.no_of_cont + self.no_of_cat,
@@ -48,11 +57,11 @@ class EnsembleModel2(nn.Module):
                                         [nn.Linear(lin_layer_sizes[i], lin_layer_sizes[i + 1])
                                          for i in range(len(lin_layer_sizes) - 1)])
 
-        for lin_layer in self.lin_layers:
-            nn.init.kaiming_normal_(lin_layer.weight.data)
-
         self.last_lin_layer = nn.Linear(lin_layer_sizes[-1], 1)
-        nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
+
+        # for lin_layer in self.lin_layers:
+        #     nn.init.kaiming_normal_(lin_layer.weight.data)
+        # nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
 
         # Batch Norm Layers
         self.bn_cont_features = nn.BatchNorm1d(self.no_of_cont)
@@ -60,21 +69,21 @@ class EnsembleModel2(nn.Module):
                                         for size in lin_layer_sizes])
 
         # Dropout Layers (can be modified by using dropout rate as argument)
-        self.thumb_dropout = nn.Dropout(0.5)
-        self.desc_dropout = nn.Dropout(0.5)
-        self.rev_dropout = nn.Dropout(0.5)
-        self.cont_dropout = nn.Dropout(0.2)  # todo
-        self.cat_dropout_layer = nn.Dropout(0.2)  # todo
-        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.2)] * len(lin_layer_sizes))
+        self.thumb_dropout = nn.Dropout(thumb_dropout)
+        self.desc_dropout = nn.Dropout(desc_dropout)
+        self.rev_dropout = nn.Dropout(rev_dropout)
+        self.cont_dropout = nn.Dropout(cont_dropout)
+        self.cat_dropout = nn.Dropout(cat_dropout)
+        self.linear_droput_layers = nn.ModuleList([nn.Dropout(dropout_rate) for dropout_rate in linear_layer_dropout])
 
     def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
         # generate embeddings and apply dropout
-        cat_data = [cat_emb_layer(cat_data[:, i])
-                    for i, cat_emb_layer in enumerate(self.cat_emb_layers)]
+        if not self.cat_emb_layers == 0:
+            cat_data = [self.cat_dropout(cat_emb_layer(cat_data[:, i]))
+                        for i, cat_emb_layer in enumerate(self.cat_emb_layers)]
 
-        cat_data = torch.cat(cat_data, 1)
-        cat_data = self.cat_dropout_layer(cat_data)
+            cat_data = torch.cat(cat_data, 1)
 
         # dropout on precomputed embeddings and batchnorm on continuous features which were not normalized yet
         thumb_data = self.thumb_dropout(thumb_data)
@@ -83,14 +92,24 @@ class EnsembleModel2(nn.Module):
         cont_data = self.cont_dropout(cont_data)
         cont_data = torch.cat([thumb_data, desc_data, rev_data, cont_data], dim=1)
 
-        x = torch.cat([cont_data, cat_data], dim=1)
+        if not self.cat_emb_layers == 0:
+            x = torch.cat([cont_data, cat_data], dim=1)
 
-        for lin_layer, dropout_layer, bn_layer in \
-                zip(self.lin_layers, self.linear_droput_layers, self.bn_layers):
-            x = bn_layer(F.relu(lin_layer(x)))
-            x = dropout_layer(x)
+        if self.use_bn_layers:
+            for lin_layer, dropout_layer, bn_layer in \
+                    zip(self.lin_layers, self.linear_droput_layers, self.bn_layers):
+                x = bn_layer(F.relu(lin_layer(x)))
+                x = dropout_layer(x)
 
-        x = self.last_lin_layer(x)
+            x = self.last_lin_layer(x)
+
+        else:
+            for lin_layer, dropout_layer in \
+                    zip(self.lin_layers, self.linear_droput_layers):
+                x = F.relu(lin_layer(x))
+                x = dropout_layer(x)
+
+            x = self.last_lin_layer(x)
 
         return x
 
@@ -124,8 +143,12 @@ class EnsembleDataset2(Dataset):
         self.cont_X = data[self.cont_cols].values
         self.cont_X = torch.from_numpy(self.cont_X).float()
 
-        self.cat_X = data[self.cat_cols].values
-        self.cat_X = torch.from_numpy(self.cat_X).float()
+        if not len(self.cat_cols) == 0:
+            self.cat_X = data[self.cat_cols].values
+            self.cat_X = torch.from_numpy(self.cat_X).float()
+        else:
+            self.cat_X = torch.clone(self.cont_X)
+            self.cat_X[...] = 0
 
         self.output = data[output_col].values.reshape(-1, 1)
         self.output = torch.from_numpy(self.output).float()
