@@ -37,7 +37,7 @@ def plot(title, label, training, validation, yscale='linear', legend=["Training"
     sns.set(style='ticks')
     plt.plot(epoch_array, training,linestyle='dashed', marker='o', zorder=-1)
     plt.plot(epoch_array, validation, linestyle='dashed', marker='o', zorder=-1)
-    plt.scatter(argmin_val, validation[argmin_val], s=20, facecolors='none', edgecolors='red')
+    plt.scatter(argmin_val, validation[argmin_val], s=120, facecolors='none', edgecolors='black')
 
     legend = [legend[0], legend[1]]
     plt.legend(legend)
