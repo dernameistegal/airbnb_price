@@ -141,11 +141,11 @@ class EnsembleDataset2(Dataset):
         self.thumb_X = torch.from_numpy(self.thumb_X).float()
 
         self.cont_X = data[self.cont_cols].values
-        self.cont_X = torch.from_numpy(self.cont_X).float()
+        self.cont_X = torch.from_numpy(self.cont_X.astype(np.float32)).float()
 
         if not len(self.cat_cols) == 0:
             self.cat_X = data[self.cat_cols].values
-            self.cat_X = torch.from_numpy(self.cat_X).float()
+            self.cat_X = torch.from_numpy(self.cat_X.astype(np.float32)).float()
         else:
             self.cat_X = torch.clone(self.cont_X)
             self.cat_X[...] = 0
