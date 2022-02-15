@@ -60,12 +60,12 @@ class EnsembleModel2(nn.Module):
                                         for size in lin_layer_sizes])
 
         # Dropout Layers (can be modified by using dropout rate as argument)
-        self.thumb_dropout = nn.Dropout(0)
-        self.desc_dropout = nn.Dropout(0)
-        self.rev_dropout = nn.Dropout(0)
-        self.cont_dropout = nn.Dropout(0)  # todo
-        self.cat_dropout_layer = nn.Dropout(0)  # todo
-        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0)] * len(lin_layer_sizes))
+        self.thumb_dropout = nn.Dropout(0.5)
+        self.desc_dropout = nn.Dropout(0.5)
+        self.rev_dropout = nn.Dropout(0.5)
+        self.cont_dropout = nn.Dropout(0.2)  # todo
+        self.cat_dropout_layer = nn.Dropout(0.2)  # todo
+        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.2)] * len(lin_layer_sizes))
 
     def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
@@ -79,12 +79,9 @@ class EnsembleModel2(nn.Module):
 
         # dropout on precomputed embeddings and batchnorm on continuous features which were not normalized yet
         thumb_data = self.thumb_dropout(thumb_data)
-        thumb_data[...] = 0
         desc_data = self.desc_dropout(desc_data)
-        desc_data[...] = 0
         rev_data = self.rev_dropout(rev_data)
-        rev_data[...] = 0
-        cont_data = self.cont_dropout((cont_data))
+        cont_data = self.cont_dropout(cont_data)
         cont_data = torch.cat([thumb_data, desc_data, rev_data, cont_data], dim=1)
 
         x = torch.cat([cont_data, cat_data], dim=1)
@@ -115,24 +112,24 @@ class EnsembleDataset2(Dataset):
         # actual data that belongs to predictors
         self.desc_X = data[self.desc_col].values.reshape(-1, 1)
         self.desc_X = np.apply_along_axis(np.concatenate, 1, self.desc_X)
-        self.desc_X = torch.from_numpy(self.desc_X.astype(np.float32))
+        self.desc_X = torch.from_numpy(self.desc_X).float()
 
         self.rev_X = data[self.rev_col].values.reshape(-1, 1)
         self.rev_X = np.apply_along_axis(np.concatenate, 1, self.rev_X)
-        self.rev_X = torch.from_numpy(self.rev_X.astype(np.float32))
+        self.rev_X = torch.from_numpy(self.rev_X).float()
 
         self.thumb_X = data[self.thumb_col].values.reshape(-1, 1)
         self.thumb_X = np.apply_along_axis(np.concatenate, 1, self.thumb_X)
-        self.thumb_X = torch.from_numpy(self.thumb_X.astype(np.float32))
+        self.thumb_X = torch.from_numpy(self.thumb_X).float()
 
         self.cont_X = data[self.cont_cols].values
-        self.cont_X = torch.from_numpy(self.cont_X.astype(np.float32))
+        self.cont_X = torch.from_numpy(self.cont_X).float()
 
         self.cat_X = data[self.cat_cols].values
-        self.cat_X = torch.from_numpy(self.cat_X.astype(np.int32))
+        self.cat_X = torch.from_numpy(self.cat_X).float()
 
         self.output = data[output_col].values.reshape(-1, 1)
-        self.output = torch.from_numpy(self.output.astype(np.float32))
+        self.output = torch.from_numpy(self.output).float()
 
     def __len__(self):
         return self.length
