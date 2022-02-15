@@ -48,11 +48,11 @@ class EnsembleModel2(nn.Module):
                                         [nn.Linear(lin_layer_sizes[i], lin_layer_sizes[i + 1])
                                          for i in range(len(lin_layer_sizes) - 1)])
 
-        # for lin_layer in self.lin_layers:
-        #     nn.init.kaiming_normal_(lin_layer.weight.data)
+        for lin_layer in self.lin_layers:
+            nn.init.kaiming_normal_(lin_layer.weight.data)
 
         self.last_lin_layer = nn.Linear(lin_layer_sizes[-1], 1)
-        # nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
+        nn.init.kaiming_normal_(self.last_lin_layer.weight.data)
 
         # Batch Norm Layers
         self.bn_cont_features = nn.BatchNorm1d(self.no_of_cont)
@@ -60,12 +60,12 @@ class EnsembleModel2(nn.Module):
                                         for size in lin_layer_sizes])
 
         # Dropout Layers (can be modified by using dropout rate as argument)
-        self.thumb_dropout = nn.Dropout(0.5)
-        self.desc_dropout = nn.Dropout(0.5)
-        self.rev_dropout = nn.Dropout(0.5)
-        self.cont_dropout = nn.Dropout(0.2)  # todo
-        self.cat_dropout_layer = nn.Dropout(0.2)  # todo
-        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0.2)] * len(lin_layer_sizes))
+        self.thumb_dropout = nn.Dropout(0)
+        self.desc_dropout = nn.Dropout(0)
+        self.rev_dropout = nn.Dropout(0)
+        self.cont_dropout = nn.Dropout(0)  # todo
+        self.cat_dropout_layer = nn.Dropout(0)  # todo
+        self.linear_droput_layers = nn.ModuleList([nn.Dropout(0)] * len(lin_layer_sizes))
 
     def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
@@ -75,7 +75,6 @@ class EnsembleModel2(nn.Module):
 
         cat_data = torch.cat(cat_data, 1)
         cat_data = self.cat_dropout_layer(cat_data)
-        cat_data[...] = 0
 
         # dropout on precomputed embeddings and batchnorm on continuous features which were not normalized yet
         thumb_data = self.thumb_dropout(thumb_data)
