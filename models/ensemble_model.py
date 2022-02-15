@@ -79,7 +79,7 @@ class EnsembleModel2(nn.Module):
     def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
         # generate embeddings and apply dropout
-        if not self.cat_emb_layers == 0:
+        if not len(self.cat_emb_layers) == 0:
             cat_data = [self.cat_dropout(cat_emb_layer(cat_data[:, i]))
                         for i, cat_emb_layer in enumerate(self.cat_emb_layers)]
 
