@@ -30,17 +30,22 @@ def plot(title, label, training, validation, yscale='linear', legend=["Training"
     training = training[::thinning]
     validation = validation[::thinning]
     epoch_array = epoch_array[::thinning]
+    argmin_val = np.argmin(validation)
+
     plt.figure(figsize=size)
 
     sns.set(style='ticks')
     plt.plot(epoch_array, training,linestyle='dashed', marker='o', zorder=-1)
     plt.plot(epoch_array, validation, linestyle='dashed', marker='o', zorder=-1)
+    plt.scatter(argmin_val, validation[argmin_val], s=5, facecolors='none', edgecolors='red')
+
     legend = [legend[0], legend[1]]
     plt.legend(legend)
     plt.xlabel('Epoch')
     plt.ylabel(label)
     plt.yscale(yscale)
     plt.title(title, fontsize=15)
+
 
     if save_path:
         plt.savefig(str(save_path), bbox_inches='tight', format="svg", transparent=True)
