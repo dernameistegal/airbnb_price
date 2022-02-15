@@ -42,4 +42,4 @@ class LanguageBertNet(nn.Module):
         return x
 
     def prediction_from_mean(self, embedding):
-        return self.linear2(embedding)
+        return self.linear3(embedding)
