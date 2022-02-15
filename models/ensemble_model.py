@@ -43,10 +43,10 @@ class EnsembleModel2(nn.Module):
             self.no_of_cat = np.sum([y for x, y in cat_emb_dims])
 
         # Embedding layers
-        if len(cat_emb_dims) == 0:
+        if not len(cat_emb_dims) == 0:
             self.cat_emb_layers = nn.ModuleList([nn.Embedding(x, y) for x, y in cat_emb_dims])
         else:
-            self.cat_emb_layers = 0
+            self.cat_emb_layers = []
 
         # Linear Layers
         first_lin_layer = nn.Linear(
