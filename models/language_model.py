@@ -35,7 +35,7 @@ class LanguageBertNet(nn.Module):
         result = self.bert(input_ids, attention_mask)
         attentions = result["attentions"]
         embedding = result["last_hidden_state"][:, 0, :]
-        x = self.drop(embedding)
+        x = self.drop1(embedding)
         x = F.relu(self.linear1(x))
         x = self.linear2(x)
 
