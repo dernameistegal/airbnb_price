@@ -5,25 +5,6 @@ from torch.utils.data import Dataset
 import numpy as np
 
 
-class EnsembleModel(nn.Module):
-    def __init__(self, nfeatures):
-        super(EnsembleModel, self).__init__()
-
-        self.linear1 = nn.Linear(300 + nfeatures, 500)
-        self.linear2 = nn.Linear(500, 500)
-        self.linear3 = nn.Linear(500, 1)
-
-    def forward(self, pic_embedding, description_embedding, reviews_embedding, features):
-        embeddings = torch.hstack((pic_embedding, description_embedding, reviews_embedding, features))
-
-        x = F.relu(self.linear1(embeddings))
-        x = F.relu(self.linear2(x))
-        x = self.linear3(x)
-
-        return x
-
-
-# requires label encoding for categories
 class EnsembleModel2(nn.Module):
 
     def __init__(self, no_of_thumb, no_of_desc, no_of_rev, no_of_cont, cat_emb_dims, lin_layer_sizes, thumb_dropout,
@@ -114,6 +95,17 @@ class EnsembleModel2(nn.Module):
             x = self.last_lin_layer(x)
 
         return x
+
+    def generate_cat_embeddings(self, variable_number, category_number):
+
+        category_number = torch.tensor(category_number)
+        category_number = torch.unsqueeze(category_number, 0)
+        category_number = torch.unsqueeze(category_number, 0)
+
+        embedding = self.cat_emb_layers[variable_number](category_number)
+        embedding = torch.squeeze(embedding)
+
+        return embedding
 
 
 class EnsembleDataset2(Dataset):

@@ -2,7 +2,7 @@ import torch
 import fastprogress
 import numpy as np
 import time
-
+import os
 
 scaler = torch.cuda.amp.GradScaler()
 
@@ -10,8 +10,6 @@ scaler = torch.cuda.amp.GradScaler()
 ############################################################################
 ##########################run training with embeddings
 ############################################################################
-#self.thumb_X[idx], self.desc_X[idx], self.rev_X[idx], self.cont_X[idx], self.cat_X[idx], self.output[idx]
-#def forward(self, thumb_data, desc_data, rev_data, cont_data, cat_data):
 
 
 def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
@@ -20,7 +18,8 @@ def train(dataloader, optimizer, model, loss_fn, device, ntrain, master_bar):
     epoch_loss = []
     i = 0
 
-    for pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label in fastprogress.progress_bar(dataloader, parent=master_bar):
+    for pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label in fastprogress.progress_bar(
+            dataloader, parent=master_bar):
         pic_embdg, description_embdg, reviews_embdg, cont_features, cat_features, label = \
             pic_embdg.to(device), description_embdg.to(device), reviews_embdg.to(device), \
             cont_features.to(device), cat_features.to(device).int(), label.to(device)
@@ -65,7 +64,7 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
             labels_pred = torch.squeeze(labels_pred)
 
             # Compute loss
-            loss = loss_fn(labels_pred,  torch.squeeze(label))
+            loss = loss_fn(labels_pred, torch.squeeze(label))
 
             # For plotting the train loss, save it for each sample
             epoch_loss.append(loss.item())
@@ -77,33 +76,40 @@ def validate(dataloader, model, loss_fn, device, nval, master_bar):
 
 
 def run_training(model, optimizer, loss_function, device, num_epochs,
-                 train_dataloader, val_dataloader, ntrain=150, nval=50, verbose=False, scheduler=None):
+                 train_dataloader, val_dataloader, ntrain=150, nval=50, verbose=False, scheduler=None,
+                 savefolder="test"):
+    # make path to save performance measures and state dict
+    savepath = "/content/drive/MyDrive/Colab/airbnb/data/model_performance/" + savefolder
+    os.mkdir(savepath)
+
     start_time = time.time()
     master_bar = fastprogress.master_bar(range(num_epochs))
     train_losses, val_losses, train_rmse, val_rmse = [], [], [], []
     for epoch in master_bar:
         # Train the model
         epoch_train_loss, epoch_train_loss_sqrt = train(train_dataloader, optimizer, model,
-                                                  loss_function, device, ntrain, master_bar)
+                                                        loss_function, device, ntrain, master_bar)
         # Validate the model
-        epoch_val_loss, epoch_val_acc = validate(val_dataloader, model, loss_function, device, nval, master_bar)
+        epoch_val_loss, epoch_val_loss_sqrt = validate(val_dataloader, model, loss_function, device, nval, master_bar)
 
         # Save loss and acc for plotting and add increase of val_acc
         train_losses.append(epoch_train_loss)
         val_losses.append(epoch_val_loss)
         train_rmse.append(epoch_train_loss_sqrt)
-        val_rmse.append(epoch_val_acc)
+        val_rmse.append(epoch_val_loss_sqrt)
 
         if val_rmse[-1] <= np.min(val_rmse):
-            state = model.state_dict()
-            print("Saving model...")
-            savepath = "/content/checkpoints/checkpoint.pt"
-            torch.save(state, savepath)
+            torch.save(model.state_dict(), savepath + "/checkpoint.pt")
+            print("saving model...")
+
         if scheduler:
             scheduler.step()
         if verbose:
             master_bar.write(
-                f'Epoch: {epoch}, Train loss: {epoch_train_loss:.2f}, val loss: {epoch_val_loss:.2f}, train rmse: {epoch_train_loss_sqrt:.3f}, val rmse {epoch_val_acc:.3f}')
+                f'Epoch: {epoch}, Train loss: {epoch_train_loss:.2f}, val loss: {epoch_val_loss:.2f}, train rmse: {epoch_train_loss_sqrt:.3f}, val rmse {epoch_val_loss_sqrt:.3f}')
+
+    np.save(savepath + "/trainloss", train_rmse)
+    np.save(savepath + "/valloss", val_rmse)
 
     time_elapsed = np.round(time.time() - start_time, 0).astype(int)
     print(f'Finished training after {time_elapsed} seconds.')
