@@ -98,12 +98,13 @@ class EnsembleModel2(nn.Module):
 
     def generate_cat_embeddings(self, variable_number, category_number):
 
-        category_number = torch.tensor(category_number)
-        category_number = torch.unsqueeze(category_number, 0)
-        category_number = torch.unsqueeze(category_number, 0)
+        with torch.no_grad():
+            category_number = torch.tensor(category_number)
+            category_number = torch.unsqueeze(category_number, 0)
+            category_number = torch.unsqueeze(category_number, 0)
 
-        embedding = self.cat_emb_layers[variable_number](category_number)
-        embedding = torch.squeeze(embedding)
+            embedding = self.cat_emb_layers[variable_number](category_number)
+            embedding = torch.squeeze(embedding)
 
         return embedding
 
