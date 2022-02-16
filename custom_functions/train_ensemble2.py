@@ -100,6 +100,7 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
 
         if val_rmse[-1] <= np.min(val_rmse):
             torch.save(model.state_dict(), savepath + "/checkpoint.pt")
+            torch.save(model, savepath + "/wholemodel.pt")
             print("saving model...")
 
         if scheduler:
