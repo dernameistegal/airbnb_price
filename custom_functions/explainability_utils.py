@@ -32,7 +32,7 @@ def visualize_attention(text, attention, offset=0):
         ls.append(subatt / np.max(subatt))
     ls = np.array(ls)
     ls = np.sum(ls, axis=0)
+    ls = ls / np.max(ls)
     ls = ls - offset
     vis_data_records = [visualization.VisualizationDataRecord(ls, 0, 0, 0, 0, 0, text.split(), 1)]
     visualization.visualize_text(vis_data_records)
-
