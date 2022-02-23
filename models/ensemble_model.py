@@ -8,7 +8,7 @@ import numpy as np
 class EnsembleModel2(nn.Module):
 
     def __init__(self, no_of_thumb, no_of_desc, no_of_rev, no_of_cont, cat_emb_dims, lin_layer_sizes, thumb_dropout,
-                 desc_dropout, rev_dropout, cont_dropout, cat_dropout, linear_layer_dropout, bn_layers=False):
+                 desc_dropout, rev_dropout, cont_dropout, cat_dropout, linear_layer_dropout, bn_layers=False, only_unstructured=False):
         super().__init__()
 
         # number of features for different feature types
@@ -37,6 +37,10 @@ class EnsembleModel2(nn.Module):
         self.lin_layers = nn.ModuleList([first_lin_layer] +
                                         [nn.Linear(lin_layer_sizes[i], lin_layer_sizes[i + 1])
                                          for i in range(len(lin_layer_sizes) - 1)])
+        if only_unstructured:
+            for module in self.lin_layers:
+                module.weight.data.fill_(1)
+                module.bias.data.fill_(20)
 
         self.last_lin_layer = nn.Linear(lin_layer_sizes[-1], 1)
 
