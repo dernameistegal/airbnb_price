@@ -38,9 +38,13 @@ class EnsembleModel2(nn.Module):
                                         [nn.Linear(lin_layer_sizes[i], lin_layer_sizes[i + 1])
                                          for i in range(len(lin_layer_sizes) - 1)])
         if only_unstructured:
-            for module in self.lin_layers:
-                module.weight.data.fill_(1)
-                module.bias.data.fill_(20)
+            for i, module in enumerate(self.lin_layers):
+                if i == 0:
+                    module.bias.data.fill_(3)
+                    module.weight.data.fill_(1)
+                else:
+                    module.bias.data.fill_(0)
+                    module.weight.data.fill_(1)
 
         self.last_lin_layer = nn.Linear(lin_layer_sizes[-1], 1)
 
