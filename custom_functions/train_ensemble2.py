@@ -3,6 +3,7 @@ import fastprogress
 import numpy as np
 import time
 import os
+import copy
 
 scaler = torch.cuda.amp.GradScaler()
 
@@ -99,8 +100,8 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
         val_rmse.append(epoch_val_loss_sqrt)
 
         if val_rmse[-1] <= np.min(val_rmse):
-            torch.save(model.state_dict(), savepath + "/checkpoint.pt")
-            torch.save(model, savepath + "/wholemodel.pt")
+            checkpoint = model.state_dict()
+            wholemodel = copy.deepcopy(model)
             print("saving model...")
 
         if scheduler:
@@ -111,6 +112,8 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
 
     np.save(savepath + "/trainloss", train_rmse)
     np.save(savepath + "/valloss", val_rmse)
+    np.save(savepath + "/checkpoint.pt", checkpoint)
+    np.save(savepath + "/wholemodel.pt", wholemodel)
 
     time_elapsed = np.round(time.time() - start_time, 0).astype(int)
     print(f'Finished training after {time_elapsed} seconds.')
