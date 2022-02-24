@@ -112,8 +112,8 @@ def run_training(model, optimizer, loss_function, device, num_epochs,
 
     np.save(savepath + "/trainloss", train_rmse)
     np.save(savepath + "/valloss", val_rmse)
-    np.save(savepath + "/checkpoint.pt", checkpoint)
-    np.save(savepath + "/wholemodel.pt", wholemodel)
+    torch.save(checkpoint, savepath + "/checkpoint.pt")
+    torch.save(wholemodel, savepath + "/wholemodel.pt")
 
     time_elapsed = np.round(time.time() - start_time, 0).astype(int)
     print(f'Finished training after {time_elapsed} seconds.')
