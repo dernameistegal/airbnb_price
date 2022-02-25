@@ -41,10 +41,10 @@ class EnsembleModel2(nn.Module):
             for i, module in enumerate(self.lin_layers):
                 if i == 0:
                     module.bias.data.fill_(3)
-                    module.weight.data = torch.eye(452)
+                    module.weight.data = torch.eye(422)
                 else:
                     module.bias.data.fill_(0)
-                    module.weight.data = torch.eye(452)
+                    module.weight.data = torch.eye(422)
 
         self.last_lin_layer = nn.Linear(lin_layer_sizes[-1], 1)
 
